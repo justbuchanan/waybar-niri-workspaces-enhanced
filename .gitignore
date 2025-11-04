@@ -1,0 +1,8 @@
+# Added by cargo
+/target
+
+# nix output
+/result
+/home-manager-example/result
+
+/.direnv

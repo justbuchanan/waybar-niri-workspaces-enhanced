@@ -1,0 +1,27 @@
+[
+  {
+    "layer": "top",
+    "modules-left": ["cffi/niri-workspaces-enhanced"],
+    "cffi/niri-workspaces-enhanced": {
+      // Make sure to set the path to the install location on your system
+      "module_path": "~/config/waybar/niri-workspaces-enhanced.so",
+      // Apply separate styles to icons depending on current state
+      "window-icon-format": {
+        "default": "{icon}",
+        "urgent": "<span foreground='#ff0000'>{icon}</span>",
+        "focused": "<span foreground='#d65d0e'>{icon}</span>",
+      },
+      // A mapping from window app_id to icon
+      "window-icons": {
+        "com.mitchellh.ghostty": "",
+        "darktable": "",
+        "foot": "",
+        "google-chrome": "",
+        "spotify": "",
+        "steam": "",
+      },
+      // If no icon is found for a window, the default is used instead
+      "window-icon-default": "*",
+    },
+  },
+]

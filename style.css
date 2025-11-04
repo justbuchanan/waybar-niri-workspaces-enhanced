@@ -1,0 +1,19 @@
+* {
+  /* If you're using font awesome, make sure you use a font that includes them */
+  font-family: Hack Nerd Font Propo;
+  font-size: 14px;
+}
+
+#workspaces button {
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+}
+
+#workspaces button.active,
+#workspaces button.focused {
+  background: alpha(blue, 0.1);
+}
+
+#workspaces button.urgent {
+  border-bottom: 3px solid alpha(red, 0.1);
+}
