@@ -31,7 +31,7 @@ cp target/release/libwaybar_niri_workspaces_enhanced.so ~/.config/waybar/niri-wo
 
 ## Configuration
 
-See [waybar-config.json](./waybar-config.json) and [style.css](./style.css) for configuration examples. Note that this module replaces waybar's builtin niri-workspaces module.
+See [waybar-config.jsonc](./waybar-config.jsonc) and [style.css](./style.css) for configuration examples. Note that this module replaces waybar's builtin niri-workspaces module.
 
 ## Rename Workspace Script
 
