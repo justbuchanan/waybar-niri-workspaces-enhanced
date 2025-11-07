@@ -4,7 +4,8 @@
     "modules-left": ["cffi/niri-workspaces-enhanced"],
     "cffi/niri-workspaces-enhanced": {
       // Make sure to set the path to the install location on your system
-      "module_path": "~/config/waybar/niri-workspaces-enhanced.so",
+      // "module_path": "~/.config/waybar/niri-workspaces-enhanced.so",
+      "module_path": "./target/debug/libwaybar_niri_workspaces_enhanced.so",
       // Apply separate styles to icons depending on current state
       "window-icon-format": {
         "default": "{icon}",
@@ -23,5 +24,6 @@
       // If no icon is found for a window, the default is used instead
       "window-icon-default": "*",
     },
+    "height": 30,
   },
 ]

@@ -1,6 +1,6 @@
 # waybar-niri-workspaces-enhanced [![Nix CI](https://github.com/justbuchanan/waybar-niri-workspaces-enhanced/actions/workflows/nix.yml/badge.svg)](https://github.com/justbuchanan/waybar-niri-workspaces-enhanced/actions/workflows/nix.yml)
 
-Enhanced niri workspaces module for waybar with window icons.
+A replacement niri plugin for waybar to display icons for running programs.
 
 ## Installation
 
