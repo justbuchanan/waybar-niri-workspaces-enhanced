@@ -72,7 +72,9 @@ impl Module for NiriWorkspacesEnhanced {
     type Config = UserConfig;
 
     fn init(info: &InitInfo, user_config: UserConfig) -> Self {
-        env_logger::init();
+        if let Err(err) = env_logger::try_init() {
+            log::warn!("Error initializing env_logger: {}", err);
+        }
 
         // Convert UserConfig to Config
         let config = Config::from_user(&user_config);
