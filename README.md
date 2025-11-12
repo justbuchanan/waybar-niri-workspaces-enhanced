@@ -46,11 +46,10 @@ See [waybar-config.jsonc](./waybar-config.jsonc) and [style.css](./style.css) fo
 
 ## Rename Workspace Script
 
-The included `rename-workspace.sh` script allows you to rename the current niri workspace using a dialog box. This can be bound to a keyboard shortcut with something like:
+The included `rename-workspace.sh` script shows a popup window that allows you to rename the current niri workspace. This can be bound to a keyboard shortcut with something like:
 
 ```kdl
 binds {
-    # Or using raw script
     Mod+R { spawn "~/.config/niri/rename-workspace.sh"; }
 }
 ```
@@ -59,3 +58,5 @@ binds {
 
 - I have not tested this with a multi-monitor setup and I expect it to need some changes to support multiple monitors well.
 - Waybar's builtin niri module has some settings that I have not implemented (yet).
+
+GitHub issues and PRs are welcome.
