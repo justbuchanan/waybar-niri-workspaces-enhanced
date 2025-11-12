@@ -6,7 +6,7 @@ A replacement niri plugin for waybar to display icons for running programs.
 
 ## Try it out (without installing)
 
-Assuming you are running niri and already have cargo intalled, this will run waybar with the nir-workspaces-ehnanced module.
+Assuming you are running niri and already have cargo intalled, this will run waybar with the niri-workspaces-ehnanced module.
 
 ```.sh
 git clone https://github.com/justbuchanan/waybar-niri-workspaces-enhanced
