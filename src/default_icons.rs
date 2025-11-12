@@ -1,5 +1,7 @@
-/// Default icon mappings for common applications
-/// These will be merged with user-provided icons, with user icons taking precedence
+/// Default icon mappings for common applications. These will be merged with
+/// user-provided icons, with user icons taking precedence. Note that this
+/// module does case-insensitive matching of app_ids, so capitalization doesn't
+/// matter.
 pub const DEFAULT_ICONS: &[(&str, &str)] = &[
     ("alacritty", ""),
     ("atom", ""),
@@ -69,3 +71,20 @@ pub const DEFAULT_ICONS: &[(&str, &str)] = &[
     ("zenity", ""),
     ("zoom", ""),
 ];
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_all_default_icon_keys_are_lowercase() {
+        for (key, _) in DEFAULT_ICONS {
+            assert_eq!(
+                key,
+                &key.to_lowercase(),
+                "Default icon key '{}' must be lowercase",
+                key
+            );
+        }
+    }
+}

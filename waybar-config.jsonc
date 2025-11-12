@@ -12,7 +12,8 @@
         "urgent": "<span foreground='red'>{icon}</span>",
         "focused": "<span foreground='blue'>{icon}</span>",
       },
-      // A mapping from window app_id to icon
+      // A mapping from window app_id to icon. Note that this module does
+      // case-insensitive matching of app_ids, so capitalization doesn't matter.
       "window-icons": {
         "com.mitchellh.ghostty": "",
         "darktable": "",

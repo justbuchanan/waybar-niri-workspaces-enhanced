@@ -335,15 +335,20 @@ struct Config {
 
 impl Config {
     pub fn from_user(uc: &UserConfig) -> Self {
-        // Start with default icons
+        // Start with default icons (already lowercase)
         let mut window_icons: HashMap<String, String> = default_icons::DEFAULT_ICONS
             .iter()
             .map(|(k, v)| (k.to_string(), v.to_string()))
             .collect();
 
         // Merge user-provided icons, overwriting defaults
+        // Lowercase all app_ids for case-insensitive matching
         if let Some(ref user_icons) = uc.window_icons {
-            window_icons.extend(user_icons.clone());
+            window_icons.extend(
+                user_icons
+                    .iter()
+                    .map(|(k, v)| (k.to_lowercase(), v.clone())),
+            );
         }
 
         Self {
@@ -624,5 +629,20 @@ mod tests {
         assert_eq!(&formats.default, DEFAULT_FORMAT);
         assert_eq!(&formats.focused, DEFAULT_FOCUSED_FORMAT);
         assert_eq!(&formats.urgent, DEFAULT_URGENT_FORMAT);
+    }
+
+    #[test]
+    fn case_insensitive_matching() {
+        let mut user_window_icons = HashMap::new();
+        user_window_icons.insert("FIREFOX".to_string(), "F".to_string());
+        let user_config = UserConfig {
+            window_icons: Some(user_window_icons),
+            window_icon_default: None,
+            window_icon_formats: None,
+        };
+        let config = Config::from_user(&user_config);
+        assert!(config.window_icons.contains_key("firefox"));
+        assert!(!config.window_icons.contains_key("FIREFOX"));
+        assert_eq!(config.window_icons.get("firefox"), Some(&"F".to_string()));
     }
 }
