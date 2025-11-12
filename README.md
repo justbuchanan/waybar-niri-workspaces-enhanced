@@ -4,6 +4,17 @@ A replacement niri plugin for waybar to display icons for running programs.
 
 ## Installation
 
+## Try it out (without installing)
+
+Assuming you are running niri and already have cargo intalled, this will run waybar with the nir-workspaces-ehnanced module.
+
+```.sh
+git clone https://github.com/justbuchanan/waybar-niri-workspaces-enhanced
+cd waybar-niri-workspaces-enhanced
+cargo build
+RUST_LOG=info waybar --config ./waybar-config.jsonc
+```
+
 ### Using Home Manager (Flake)
 
 This repo provides a home manager module you can include and enable. See the [example](./home-manager-example/flake.nix).
