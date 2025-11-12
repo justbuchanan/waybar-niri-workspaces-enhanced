@@ -9,8 +9,8 @@
       // Apply separate styles to icons depending on current state
       "window-icon-format": {
         "default": "{icon}",
-        "urgent": "<span foreground='#ff0000'>{icon}</span>",
-        "focused": "<span foreground='#d65d0e'>{icon}</span>",
+        "urgent": "<span foreground='red'>{icon}</span>",
+        "focused": "<span foreground='blue'>{icon}</span>",
       },
       // A mapping from window app_id to icon
       "window-icons": {

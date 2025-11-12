@@ -18,8 +18,8 @@ use waybar_cffi::{
 };
 
 const DEFAULT_FORMAT: &str = "{icon}";
-const DEFAULT_FOCUSED_FORMAT: &str = "{icon}";
-const DEFAULT_URGENT_FORMAT: &str = "{icon}";
+const DEFAULT_FOCUSED_FORMAT: &str = "<span foreground='blue'>{icon}</span>";
+const DEFAULT_URGENT_FORMAT: &str = "<span foreground='red'>{icon}</span>";
 
 fn get_raw_icon(cfg: &Config, window: &Window) -> String {
     let Some(app_id) = &window.app_id else {
