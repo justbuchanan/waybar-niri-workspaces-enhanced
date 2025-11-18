@@ -6,6 +6,14 @@
       // Make sure to set the path to the install location on your system
       // "module_path": "~/.config/waybar/niri-workspaces-enhanced.so",
       "module_path": "./target/debug/libwaybar_niri_workspaces_enhanced.so",
+      // Format string for workspace labels. Available placeholders:
+      //   {index}          - Workspace index number
+      //   {name}           - Workspace name (might be empty)
+      //   {index-and-name} - Index followed by name if present (e.g., "1 Work")
+      //   {value}          - Name if present, otherwise index
+      //   {separator}      - ": " when icons are present, "" when empty
+      //   {window-icons}   - Formatted icons for windows in workspace
+      "format": "{index-and-name}{separator}{window-icons}",
       // Apply separate styles to icons depending on current state
       "window-icon-format": {
         "default": "{icon}",

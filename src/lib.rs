@@ -17,6 +17,7 @@ use waybar_cffi::{
     waybar_module, InitInfo, Module,
 };
 
+const DEFAULT_WORKSPACE_FORMAT: &str = "{index-and-name}{separator}{window-icons}";
 const DEFAULT_FORMAT: &str = "{icon}";
 const DEFAULT_FOCUSED_FORMAT: &str = "<span foreground='blue'>{icon}</span>";
 const DEFAULT_URGENT_FORMAT: &str = "<span foreground='red'>{icon}</span>";
@@ -50,20 +51,28 @@ fn format_icon(cfg: &Config, icon: &str, is_focused: bool, is_urgent: bool) -> S
     format.replace("{icon}", icon)
 }
 
-fn format_workspace_label(info: &WorkspaceInfo) -> String {
-    let mut markup = info.idx.to_string();
-
+fn format_workspace_label(cfg: &Config, info: &WorkspaceInfo) -> String {
+    let index = info.idx.to_string();
+    let name = &info.name;
+    let mut index_and_name = index.clone();
     if !info.name.is_empty() {
-        markup.push(' ');
-        markup.push_str(&info.name);
+        index_and_name.push(' ');
+        index_and_name.push_str(&name);
     }
+    let value = if !info.name.is_empty() {
+        info.name.clone()
+    } else {
+        index.clone()
+    };
+    let separator = if info.icons.is_empty() { "" } else { ": " };
 
-    if !info.icons.is_empty() {
-        markup.push_str(": ");
-        markup.push_str(&info.icons);
-    }
-
-    markup
+    cfg.format
+        .replace("{index}", &index)
+        .replace("{name}", &name)
+        .replace("{index-and-name}", &index_and_name)
+        .replace("{value}", &value)
+        .replace("{separator}", separator)
+        .replace("{window-icons}", &info.icons)
 }
 
 struct NiriWorkspacesEnhanced;
@@ -89,9 +98,12 @@ impl Module for NiriWorkspacesEnhanced {
         let (tx, rx) = async_channel::unbounded();
 
         // Spawn a background thread for blocking I/O
-        std::thread::spawn(move || {
-            if let Err(err) = background_task(config, tx) {
-                log::error!("Background task error: {}", err);
+        std::thread::spawn({
+            let config = config.clone();
+            move || {
+                if let Err(err) = background_task(config, tx) {
+                    log::error!("Background task error: {}", err);
+                }
             }
         });
 
@@ -110,7 +122,7 @@ impl Module for NiriWorkspacesEnhanced {
                 // Add new buttons in sorted order
                 for info in ws_info {
                     let label = Label::new(None);
-                    label.set_markup(&format_workspace_label(&info));
+                    label.set_markup(&format_workspace_label(&config, &info));
 
                     let button = Button::new();
                     button.add(&label);
@@ -273,6 +285,8 @@ struct UserWindowIconFormats {
 }
 #[derive(Deserialize, Debug, Clone)]
 struct UserConfig {
+    #[serde(default)]
+    format: Option<String>,
     #[serde(default, rename = "window-icons")]
     window_icons: Option<HashMap<String, String>>,
     #[serde(default, rename = "window-icon-default")]
@@ -327,6 +341,7 @@ impl WindowIconFormats {
 // TODO: can active vs urgent styling be done with css instead of a config option?
 #[derive(Debug, Clone)]
 struct Config {
+    format: String,
     window_icon_default: String,
     window_icon_formats: WindowIconFormats,
     /// Merged icons: default icons + user-provided icons (user icons take precedence)
@@ -352,6 +367,10 @@ impl Config {
         }
 
         Self {
+            format: uc
+                .format
+                .clone()
+                .unwrap_or_else(|| DEFAULT_WORKSPACE_FORMAT.to_string()),
             window_icon_default: uc.window_icon_default.clone().unwrap_or_default(),
             window_icon_formats: uc
                 .window_icon_formats
@@ -391,8 +410,22 @@ mod tests {
         }
     }
 
+    fn create_default_config() -> Config {
+        Config {
+            format: "{index-and-name}{separator}{window-icons}".to_string(),
+            window_icon_default: String::new(),
+            window_icon_formats: WindowIconFormats {
+                focused: "{icon}".to_string(),
+                urgent: "{icon}".to_string(),
+                default: "{icon}".to_string(),
+            },
+            window_icons: HashMap::new(),
+        }
+    }
+
     #[test]
     fn test_format_workspace_label_basic() {
+        let cfg = create_default_config();
         let info = WorkspaceInfo {
             id: 1,
             name: String::new(),
@@ -402,11 +435,12 @@ mod tests {
             is_urgent: false,
             is_active: false,
         };
-        assert_eq!(format_workspace_label(&info), "1");
+        assert_eq!(format_workspace_label(&cfg, &info), "1");
     }
 
     #[test]
     fn test_format_workspace_label_with_name() {
+        let cfg = create_default_config();
         let info = WorkspaceInfo {
             id: 1,
             name: "Work".to_string(),
@@ -416,11 +450,12 @@ mod tests {
             is_urgent: false,
             is_active: false,
         };
-        assert_eq!(format_workspace_label(&info), "2 Work");
+        assert_eq!(format_workspace_label(&cfg, &info), "2 Work");
     }
 
     #[test]
     fn test_format_workspace_label_with_icons() {
+        let cfg = create_default_config();
         let info = WorkspaceInfo {
             id: 1,
             name: String::new(),
@@ -430,11 +465,12 @@ mod tests {
             is_urgent: false,
             is_active: false,
         };
-        assert_eq!(format_workspace_label(&info), "3: 🔥 💻");
+        assert_eq!(format_workspace_label(&cfg, &info), "3: 🔥 💻");
     }
 
     #[test]
     fn test_format_workspace_label_with_name_and_icons() {
+        let cfg = create_default_config();
         let info = WorkspaceInfo {
             id: 1,
             name: "Dev".to_string(),
@@ -444,12 +480,13 @@ mod tests {
             is_urgent: false,
             is_active: false,
         };
-        assert_eq!(format_workspace_label(&info), "4 Dev: 🚀");
+        assert_eq!(format_workspace_label(&cfg, &info), "4 Dev: 🚀");
     }
 
     #[test]
     fn test_format_icon_default() {
         let config = Config {
+            format: String::new(),
             window_icon_default: String::new(),
             window_icon_formats: WindowIconFormats {
                 focused: "{icon}".to_string(),
@@ -470,6 +507,7 @@ mod tests {
             default: "{icon}".to_string(),
         };
         let config = Config {
+            format: String::new(),
             window_icon_default: String::new(),
             window_icon_formats: formats,
             window_icons: HashMap::new(),
@@ -486,6 +524,7 @@ mod tests {
             default: "{icon}".to_string(),
         };
         let config = Config {
+            format: String::new(),
             window_icon_default: String::new(),
             window_icon_formats: formats,
             window_icons: HashMap::new(),
@@ -501,6 +540,7 @@ mod tests {
         window_icons.insert("code".to_string(), "💻".to_string());
 
         let config = Config {
+            format: String::new(),
             window_icon_default: "❓".to_string(),
             window_icon_formats: WindowIconFormats {
                 focused: "{icon}".to_string(),
@@ -518,6 +558,7 @@ mod tests {
     #[test]
     fn test_get_raw_icon_no_app_id() {
         let config = Config {
+            format: String::new(),
             window_icon_default: "❓".to_string(),
             window_icon_formats: WindowIconFormats {
                 focused: "{icon}".to_string(),
@@ -538,6 +579,7 @@ mod tests {
         window_icons.insert("firefox".to_string(), "🦊".to_string());
 
         let config = Config {
+            format: String::new(),
             window_icon_default: String::new(),
             window_icon_formats: WindowIconFormats {
                 focused: "{icon}".to_string(),
@@ -555,6 +597,7 @@ mod tests {
     #[test]
     fn test_from_user_includes_defaults() {
         let user_config = UserConfig {
+            format: None,
             window_icons: None,
             window_icon_default: None,
             window_icon_formats: None,
@@ -572,6 +615,7 @@ mod tests {
         user_icons.insert("google-chrome".to_string(), "🔥".to_string());
 
         let user_config = UserConfig {
+            format: None,
             window_icons: Some(user_icons),
             window_icon_default: None,
             window_icon_formats: None,
@@ -592,6 +636,7 @@ mod tests {
         user_icons.insert("custom-app".to_string(), "🎯".to_string());
 
         let user_config = UserConfig {
+            format: None,
             window_icons: Some(user_icons),
             window_icon_default: None,
             window_icon_formats: None,
@@ -612,6 +657,7 @@ mod tests {
     #[test]
     fn test_from_user_with_defaults() {
         let user_config = UserConfig {
+            format: None,
             window_icons: None,
             window_icon_default: None,
             window_icon_formats: None,
@@ -636,6 +682,7 @@ mod tests {
         let mut user_window_icons = HashMap::new();
         user_window_icons.insert("FIREFOX".to_string(), "F".to_string());
         let user_config = UserConfig {
+            format: None,
             window_icons: Some(user_window_icons),
             window_icon_default: None,
             window_icon_formats: None,
