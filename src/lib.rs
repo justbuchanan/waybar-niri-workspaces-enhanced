@@ -7,14 +7,14 @@ use niri_ipc::{Event, Request, Response, Window};
 use serde::Deserialize;
 use std::collections::HashMap;
 use waybar_cffi::{
+    InitInfo, Module,
     gtk::{
-        self,
+        self, Button, Label, Orientation,
         glib::MainContext,
         prelude::{ButtonExt, LabelExt},
         traits::{ContainerExt, StyleContextExt, WidgetExt},
-        Button, Label, Orientation,
     },
-    waybar_module, InitInfo, Module,
+    waybar_module,
 };
 
 const DEFAULT_WORKSPACE_FORMAT: &str = "{index-and-name}{separator}{window-icons}";
@@ -57,7 +57,7 @@ fn format_workspace_label(cfg: &Config, info: &WorkspaceInfo) -> String {
     let mut index_and_name = index.clone();
     if !info.name.is_empty() {
         index_and_name.push(' ');
-        index_and_name.push_str(&name);
+        index_and_name.push_str(name);
     }
     let value = if !info.name.is_empty() {
         info.name.clone()
@@ -68,7 +68,7 @@ fn format_workspace_label(cfg: &Config, info: &WorkspaceInfo) -> String {
 
     cfg.format
         .replace("{index}", &index)
-        .replace("{name}", &name)
+        .replace("{name}", name)
         .replace("{index-and-name}", &index_and_name)
         .replace("{value}", &value)
         .replace("{separator}", separator)
@@ -311,13 +311,13 @@ impl WindowIconFormats {
             ("default", &user_formats.default),
         ];
         for (name, format_opt) in formats {
-            if let Some(format) = format_opt {
-                if !format.contains("{icon}") {
-                    log::warn!(
-                        "window-icon-format.{} must contain the substring \"{{{{icon}}}}\", using default",
-                        name
-                    );
-                }
+            if let Some(format) = format_opt
+                && !format.contains("{icon}")
+            {
+                log::warn!(
+                    "window-icon-format.{} must contain the substring \"{{icon}}\", using default",
+                    name
+                );
             }
         }
 
@@ -375,7 +375,7 @@ impl Config {
             window_icon_formats: uc
                 .window_icon_formats
                 .as_ref()
-                .map(|f| WindowIconFormats::from_user(f))
+                .map(WindowIconFormats::from_user)
                 .unwrap_or_else(|| WindowIconFormats {
                     focused: DEFAULT_FOCUSED_FORMAT.to_string(),
                     urgent: DEFAULT_URGENT_FORMAT.to_string(),
