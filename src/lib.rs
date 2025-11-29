@@ -400,6 +400,7 @@ mod tests {
             is_focused: false,
             is_floating: false,
             is_urgent: false,
+            focus_timestamp: None,
             layout: niri_ipc::WindowLayout {
                 pos_in_scrolling_layout: None,
                 tile_size: (0.0, 0.0),
