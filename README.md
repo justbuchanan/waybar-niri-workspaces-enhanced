@@ -2,6 +2,8 @@
 
 A replacement niri plugin for waybar to display icons for running programs.
 
+![screenshot](screenshot.png)
+
 ## Installation
 
 ## Try it out (without installing)
