@@ -111,8 +111,11 @@ impl Module for NiriWorkspacesEnhanced {
         let context = MainContext::default();
         context.spawn_local(async move {
             while let Ok(mut ws_info) = rx.recv().await {
-                // Sort by workspace index (ascending order)
-                ws_info.sort_by_key(|info| info.idx);
+                // Sort by output, then workspace index. Workspace indices
+                // restart from 1 on every output, so sorting by index alone
+                // leaves the relative order of same-index workspaces up to
+                // HashMap iteration order, which changes between updates.
+                ws_info.sort_by(|a, b| a.output.cmp(&b.output).then(a.idx.cmp(&b.idx)));
 
                 // Clear existing buttons
                 for child in container.children() {
@@ -180,6 +183,7 @@ struct WorkspaceInfo {
     name: String,
     icons: String,
     idx: u8,
+    output: Option<String>,
     is_focused: bool,
     is_urgent: bool,
     is_active: bool,
@@ -216,6 +220,16 @@ fn background_task(
     Ok(())
 }
 
+/// Whether a workspace on `ws_output` should be shown given the configured
+/// `filter`. No filter means every workspace is shown; with a filter, a
+/// workspace currently not assigned to any output is hidden.
+fn matches_output(filter: Option<&str>, ws_output: Option<&str>) -> bool {
+    match filter {
+        None => true,
+        Some(wanted) => ws_output == Some(wanted),
+    }
+}
+
 fn update_workspaces(
     config: &Config,
     tx: &async_channel::Sender<Vec<WorkspaceInfo>>,
@@ -228,6 +242,7 @@ fn update_workspaces(
     // Store workspace info using WorkspaceInfo struct
     let mut ws_info: HashMap<u64, WorkspaceInfo> = workspaces
         .iter()
+        .filter(|ws| matches_output(config.output.as_deref(), ws.output.as_deref()))
         .map(|ws| {
             (
                 ws.id,
@@ -236,6 +251,7 @@ fn update_workspaces(
                     name: ws.name.clone().unwrap_or_default(),
                     icons: String::new(),
                     idx: ws.idx,
+                    output: ws.output.clone(),
                     is_focused: ws.is_focused,
                     is_urgent: ws.is_urgent,
                     is_active: ws.is_active,
@@ -287,6 +303,11 @@ struct UserWindowIconFormats {
 struct UserConfig {
     #[serde(default)]
     format: Option<String>,
+    /// Only show workspaces on this output (e.g. "HDMI-A-1"). Useful for
+    /// multi-monitor setups, where each bar instance should typically show
+    /// the workspaces of its own output. If unset, all outputs are shown.
+    #[serde(default)]
+    output: Option<String>,
     #[serde(default, rename = "window-icons")]
     window_icons: Option<HashMap<String, String>>,
     #[serde(default, rename = "window-icon-default")]
@@ -342,6 +363,8 @@ impl WindowIconFormats {
 #[derive(Debug, Clone)]
 struct Config {
     format: String,
+    /// If set, only workspaces on this output are shown.
+    output: Option<String>,
     window_icon_default: String,
     window_icon_formats: WindowIconFormats,
     /// Merged icons: default icons + user-provided icons (user icons take precedence)
@@ -371,6 +394,7 @@ impl Config {
                 .format
                 .clone()
                 .unwrap_or_else(|| DEFAULT_WORKSPACE_FORMAT.to_string()),
+            output: uc.output.clone(),
             window_icon_default: uc.window_icon_default.clone().unwrap_or_default(),
             window_icon_formats: uc
                 .window_icon_formats
@@ -414,6 +438,7 @@ mod tests {
     fn create_default_config() -> Config {
         Config {
             format: "{index-and-name}{separator}{window-icons}".to_string(),
+            output: None,
             window_icon_default: String::new(),
             window_icon_formats: WindowIconFormats {
                 focused: "{icon}".to_string(),
@@ -432,6 +457,7 @@ mod tests {
             name: String::new(),
             icons: String::new(),
             idx: 1,
+            output: None,
             is_focused: false,
             is_urgent: false,
             is_active: false,
@@ -447,6 +473,7 @@ mod tests {
             name: "Work".to_string(),
             icons: String::new(),
             idx: 2,
+            output: None,
             is_focused: false,
             is_urgent: false,
             is_active: false,
@@ -462,6 +489,7 @@ mod tests {
             name: String::new(),
             icons: "🔥 💻".to_string(),
             idx: 3,
+            output: None,
             is_focused: false,
             is_urgent: false,
             is_active: false,
@@ -477,6 +505,7 @@ mod tests {
             name: "Dev".to_string(),
             icons: "🚀".to_string(),
             idx: 4,
+            output: None,
             is_focused: false,
             is_urgent: false,
             is_active: false,
@@ -488,6 +517,7 @@ mod tests {
     fn test_format_icon_default() {
         let config = Config {
             format: String::new(),
+            output: None,
             window_icon_default: String::new(),
             window_icon_formats: WindowIconFormats {
                 focused: "{icon}".to_string(),
@@ -509,6 +539,7 @@ mod tests {
         };
         let config = Config {
             format: String::new(),
+            output: None,
             window_icon_default: String::new(),
             window_icon_formats: formats,
             window_icons: HashMap::new(),
@@ -526,6 +557,7 @@ mod tests {
         };
         let config = Config {
             format: String::new(),
+            output: None,
             window_icon_default: String::new(),
             window_icon_formats: formats,
             window_icons: HashMap::new(),
@@ -542,6 +574,7 @@ mod tests {
 
         let config = Config {
             format: String::new(),
+            output: None,
             window_icon_default: "❓".to_string(),
             window_icon_formats: WindowIconFormats {
                 focused: "{icon}".to_string(),
@@ -560,6 +593,7 @@ mod tests {
     fn test_get_raw_icon_no_app_id() {
         let config = Config {
             format: String::new(),
+            output: None,
             window_icon_default: "❓".to_string(),
             window_icon_formats: WindowIconFormats {
                 focused: "{icon}".to_string(),
@@ -581,6 +615,7 @@ mod tests {
 
         let config = Config {
             format: String::new(),
+            output: None,
             window_icon_default: String::new(),
             window_icon_formats: WindowIconFormats {
                 focused: "{icon}".to_string(),
@@ -599,6 +634,7 @@ mod tests {
     fn test_from_user_includes_defaults() {
         let user_config = UserConfig {
             format: None,
+            output: None,
             window_icons: None,
             window_icon_default: None,
             window_icon_formats: None,
@@ -617,6 +653,7 @@ mod tests {
 
         let user_config = UserConfig {
             format: None,
+            output: None,
             window_icons: Some(user_icons),
             window_icon_default: None,
             window_icon_formats: None,
@@ -638,6 +675,7 @@ mod tests {
 
         let user_config = UserConfig {
             format: None,
+            output: None,
             window_icons: Some(user_icons),
             window_icon_default: None,
             window_icon_formats: None,
@@ -659,6 +697,7 @@ mod tests {
     fn test_from_user_with_defaults() {
         let user_config = UserConfig {
             format: None,
+            output: None,
             window_icons: None,
             window_icon_default: None,
             window_icon_formats: None,
@@ -679,11 +718,38 @@ mod tests {
     }
 
     #[test]
+    fn test_matches_output_no_filter_shows_everything() {
+        assert!(matches_output(None, Some("HDMI-A-1")));
+        assert!(matches_output(None, None));
+    }
+
+    #[test]
+    fn test_matches_output_filter() {
+        assert!(matches_output(Some("HDMI-A-1"), Some("HDMI-A-1")));
+        assert!(!matches_output(Some("HDMI-A-1"), Some("eDP-1")));
+        assert!(!matches_output(Some("HDMI-A-1"), None));
+    }
+
+    #[test]
+    fn test_from_user_output() {
+        let user_config = UserConfig {
+            format: None,
+            output: Some("HDMI-A-1".to_string()),
+            window_icons: None,
+            window_icon_default: None,
+            window_icon_formats: None,
+        };
+        let config = Config::from_user(&user_config);
+        assert_eq!(config.output.as_deref(), Some("HDMI-A-1"));
+    }
+
+    #[test]
     fn case_insensitive_matching() {
         let mut user_window_icons = HashMap::new();
         user_window_icons.insert("FIREFOX".to_string(), "F".to_string());
         let user_config = UserConfig {
             format: None,
+            output: None,
             window_icons: Some(user_window_icons),
             window_icon_default: None,
             window_icon_formats: None,

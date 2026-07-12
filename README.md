@@ -56,9 +56,30 @@ binds {
 }
 ```
 
-## Caveats
+## Multi-monitor setups
 
-- I have not tested this with a multi-monitor setup and I expect it to need some changes to support multiple monitors well.
+By default the module shows the workspaces of all outputs. Since niri restarts
+workspace indices from 1 on every output, that combined list is usually not
+what you want. Set the `output` option to only show the workspaces of one
+output, typically by defining one bar per output in the waybar config and
+pointing each bar's module at its own output:
+
+```jsonc
+[
+  {
+    "output": "HDMI-A-1",
+    "modules-left": ["cffi/niri-workspaces-enhanced"],
+    "cffi/niri-workspaces-enhanced": { "output": "HDMI-A-1", ... }
+  },
+  {
+    "output": "eDP-1",
+    "modules-left": ["cffi/niri-workspaces-enhanced"],
+    "cffi/niri-workspaces-enhanced": { "output": "eDP-1", ... }
+  }
+]
+```
+
+## Caveats
 - Waybar's builtin niri module has some settings that I have not implemented (yet).
 
 GitHub issues and PRs are welcome.

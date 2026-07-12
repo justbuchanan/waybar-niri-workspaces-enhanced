@@ -14,6 +14,12 @@
       //   {separator}      - ": " when icons are present, "" when empty
       //   {window-icons}   - Formatted icons for windows in workspace
       "format": "{index-and-name}{separator}{window-icons}",
+      // Only show workspaces on the given output. Recommended on
+      // multi-monitor setups: define one bar per output in the waybar config
+      // and give each bar's module the name of its own output (workspace
+      // indices restart from 1 on every output, so an unfiltered list mixes
+      // unrelated workspaces). If unset, workspaces of all outputs are shown.
+      // "output": "HDMI-A-1",
       // Apply separate styles to icons depending on current state
       "window-icon-format": {
         "default": "{icon}",
