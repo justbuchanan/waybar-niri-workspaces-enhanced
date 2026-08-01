@@ -87,7 +87,7 @@
             rustfmt
             taplo
             nixpkgs-fmt
-            nodePackages.prettier
+            prettier
             treefmt
 
             # For rename-workspace.sh script
