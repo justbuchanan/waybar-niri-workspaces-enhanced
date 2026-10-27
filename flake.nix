@@ -17,11 +17,11 @@
 
         config = lib.mkIf config.programs.waybar.niri-workspaces-enhanced.enable {
           home.file.".config/waybar/niri-workspaces-enhanced.so" = {
-            source = "${self.packages.${pkgs.system}.default}/lib/libwaybar_niri_workspaces_enhanced.so";
+            source = "${self.packages.${pkgs.stdenv.hostPlatform.system}.default}/lib/libwaybar_niri_workspaces_enhanced.so";
           };
 
           home.file.".config/niri/rename-workspace.sh" = {
-            source = "${self.packages.${pkgs.system}.rename-workspace}/bin/niri-rename-workspace";
+            source = "${self.packages.${pkgs.stdenv.hostPlatform.system}.rename-workspace}/bin/niri-rename-workspace";
             executable = true;
           };
         };
